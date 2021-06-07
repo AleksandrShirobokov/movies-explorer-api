@@ -1,2 +1,2 @@
 # movies-explorer-api
-https://krasavchik.students.nomoredomains.club/users/me
+https://api.krasavchik.students.nomoredomains.club/users/me
