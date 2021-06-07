@@ -13,11 +13,9 @@ module.exports.movieValidation = celebrate({
   body: Joi
     .object()
     .keys({
-      name: Joi.string().required().min(2).max(30),
-      link: Joi.string().required().min(2).max(256),
       country: Joi.string().required().min(1).max(30),
       director: Joi.string().required().min(1).max(30),
-      duration: Joi.number().required().min(1).max(30),
+      duration: Joi.number().required(),
       year: Joi.string().required().min(4).max(4),
       description: Joi.string().required().min(2).max(256),
       image: Joi.string().required().min(2).max(256)

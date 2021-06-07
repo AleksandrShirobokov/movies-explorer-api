@@ -48,7 +48,7 @@ module.exports.patchUser = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
     { name, email },
-    { new: true, runValidation: true, required: true },
+    { new: true, runValidation: true },
   )
     .orFail(new Error('Запрашиваемый пользователь не найден'))
     .then((user) => res.status(200).send(user))
