@@ -4,18 +4,20 @@ const User = require('../models/users');
 
 const BadRequestError = require('../errors/BadRequestError');
 const ConflictError = require('../errors/ConflictError');
-const NotFoundError = require('../errors/NotFoundError');
 const UnauthorizedError = require('../errors/UnauthorizedError');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
+const {
+  BAD_REQUEST_ERROR_MSG,
+  WRONG_EMAIL_PASSWORD_MSG,
+  USER_ALREADY_EXIST_MSG,
+} = require('../utils/constants');
+
+const { NODE_ENV, JWT_SECRET } = require('../config');
 
 module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
-    .orFail(new Error('Запрашиваемый пользователь не найден'))
-    .then((user) => res.status(200).send(user))
-    .catch((err) => {
-      throw new NotFoundError(err.message);
-    })
+    .then((user) => res.status(200).send(user)
+    )
     .catch(next);
 };
 
@@ -36,9 +38,14 @@ module.exports.createUser = (req, res, next) => {
     }))
     .catch((err) => {
       if (err.name === 'MongoError' || err.code === 11000) {
-        throw new ConflictError(err.message);
+        throw new ConflictError(USER_ALREADY_EXIST_MSG);
       }
-      throw new BadRequestError(err.message);
+      if (err.name === 'ValidationError') {
+        throw new BadRequestError(`${BAD_REQUEST_ERROR_MSG}: ${err.message}`);
+      } else {
+        next(err);
+      }
+       
     })
     .catch(next);
 };
@@ -50,13 +57,14 @@ module.exports.patchUser = (req, res, next) => {
     { name, email },
     { new: true, runValidation: true },
   )
-    .orFail(new Error('Запрашиваемый пользователь не найден'))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
-      if (err.message === 'Запрашиваемый пользователь не найден' || err.name === 'Невалидный id') {
-        throw new NotFoundError(err.message);
-      } else if (err.name === 'CastError') {
-        throw new BadRequestError(err.message);
+      if (err.name === 'ValidationError') {
+        throw new BadRequestError(`${BAD_REQUEST_ERROR_MSG}: ${err.message}`);
+      } else if (err.name === 'MongoError' && err.code === 11000) {
+        throw new ConflictError(USER_ALREADY_EXIST_MSG);
+      } else {
+        next(err);
       }
     })
     .catch(next);
@@ -72,7 +80,7 @@ module.exports.login = (req, res, next) => {
       res.status(200).send({ token });
     })
     .catch((err) => {
-      throw new UnauthorizedError(err.message);
+      throw new UnauthorizedError(WRONG_EMAIL_PASSWORD_MSG);
     })
     .catch(next);
 };
